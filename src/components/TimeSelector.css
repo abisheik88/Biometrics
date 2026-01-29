@@ -1,0 +1,280 @@
+/* TimeSelector – dark theme to match app */
+.time-selector {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.time-selector__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.02em;
+}
+
+.time-selector__inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
+  min-width: min-content;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  padding: 0.35rem 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.time-selector__group {
+  position: relative;
+  display: inline-flex;
+  align-items: stretch;
+}
+
+.time-selector__input {
+  width: 2.5rem;
+  padding: 0.5rem 0.25rem 0.5rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 8px 0 0 8px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.time-selector__input::placeholder {
+  color: #64748b;
+}
+
+.time-selector__input:hover {
+  border-color: #64748b;
+}
+
+.time-selector__input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.time-selector__input--minute {
+  width: 2.5rem;
+}
+
+/* Chevron button – dark */
+.time-selector__chevron-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  min-width: 2rem;
+  padding: 0;
+  color: #94a3b8;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.time-selector__chevron-btn:hover {
+  background: #334155;
+  color: #38bdf8;
+  border-color: #475569;
+}
+
+.time-selector__chevron-btn:focus {
+  outline: none;
+  color: #38bdf8;
+}
+
+.time-selector__chevron-icon {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* 24-hour format: unified time block */
+.time-selector--24h .time-selector__inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0.25rem 0;
+}
+
+.time-selector--24h .time-selector__group {
+  border: 1px solid #475569;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.time-selector--24h .time-selector__group:first-of-type {
+  border-radius: 8px 0 0 8px;
+  border-right: none;
+}
+
+.time-selector--24h .time-selector__group:last-of-type {
+  border-radius: 0 8px 8px 0;
+}
+
+.time-selector--24h .time-selector__input {
+  width: 2.75rem;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: #1e293b;
+}
+
+.time-selector--24h .time-selector__input--minute {
+  width: 2.75rem;
+}
+
+.time-selector--24h .time-selector__input:focus {
+  box-shadow: none;
+}
+
+.time-selector--24h .time-selector__chevron-btn {
+  border: none;
+  border-radius: 0;
+  border-left: 1px solid #334155;
+  background: #1e293b;
+}
+
+.time-selector--24h .time-selector__separator {
+  padding: 0 0.35rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.time-selector__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 3rem;
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-selector__trigger:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.time-selector__trigger:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+.time-selector__trigger--ampm {
+  min-width: 2.75rem;
+  padding: 0.5rem 0.5rem;
+}
+
+/* AM/PM select – dark */
+.time-selector__select {
+  padding: 0.5rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  min-width: 3rem;
+}
+
+.time-selector__select:hover {
+  border-color: #64748b;
+}
+
+.time-selector__select:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.time-selector__value {
+  line-height: 1;
+}
+
+.time-selector__unit {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.time-selector__separator {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #94a3b8;
+  padding: 0 0.1rem;
+  user-select: none;
+}
+
+.time-selector__separator--ampm {
+  padding: 0 0.25rem;
+}
+
+/* Dropdown – dark */
+.time-selector__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 50;
+  min-width: 4rem;
+  max-height: 200px;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+.time-selector__dropdown--minutes {
+  min-width: 3.5rem;
+  max-height: 240px;
+}
+
+.time-selector__dropdown--ampm {
+  min-width: 3rem;
+}
+
+.time-selector__option {
+  padding: 0.45rem 0.65rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: #e2e8f0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.time-selector__option:hover {
+  background: #334155;
+  color: #38bdf8;
+}
+
+.time-selector__option--selected {
+  background: #334155;
+  color: #38bdf8;
+}
