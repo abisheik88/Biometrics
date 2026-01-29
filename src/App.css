@@ -96,6 +96,230 @@
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
 }
 
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid #334155;
+}
+
+.tabs__tab {
+  padding: 0.6rem 1.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tabs__tab:hover {
+  color: #e2e8f0;
+}
+
+.tabs__tab--active {
+  color: #38bdf8;
+  border-bottom-color: #38bdf8;
+}
+
+/* Containers (Manual / Upload) */
+.container {
+  padding-top: 0.25rem;
+}
+
+.container--manual {
+  /* manual entry content */
+}
+
+.container--upload {
+  padding: 1rem 0;
+}
+
+.upload-hint {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0 0 1rem;
+  line-height: 1.5;
+}
+
+.upload-hint code {
+  background: #334155;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.upload-label:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: #38bdf8;
+}
+
+.upload-input {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.upload-error {
+  margin: 1rem 0 0;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid #f87171;
+  border-radius: 8px;
+}
+
+.upload-preview-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.upload-preview-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.upload-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  border-bottom: 1px solid #334155;
+}
+
+.upload-preview-row:last-child {
+  border-bottom: none;
+}
+
+.upload-add-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: #38bdf8;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.upload-add-btn:hover {
+  background: #0ea5e9;
+}
+
+/* Bulk entry */
+.container--bulk {
+  padding: 1rem 0;
+}
+
+.bulk-hint {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.bulk-hint code {
+  background: #334155;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.bulk-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: #e2e8f0;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.bulk-textarea::placeholder {
+  color: #64748b;
+}
+
+.bulk-textarea:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.bulk-actions {
+  margin-top: 0.75rem;
+}
+
+.bulk-parse-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #38bdf8;
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bulk-parse-btn:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: #38bdf8;
+}
+
+.bulk-error {
+  margin: 0.75rem 0 0;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid #f87171;
+  border-radius: 8px;
+}
+
+.bulk-preview-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
 /* Punch log */
 .punch-log {
   margin-bottom: 1.5rem;
