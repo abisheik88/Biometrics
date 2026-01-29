@@ -138,20 +138,20 @@ function App() {
 
   const addPunch = useCallback(() => {
     setSessions((prev) => [...prev, createSession()]);
-  }, []);
+  }, [setSessions]);
 
   const removePunch = useCallback((id) => {
     setSessions((prev) => {
       const next = prev.filter((s) => s.id !== id);
       return next.length ? next : [createSession()];
     });
-  }, []);
+  }, [setSessions]);
 
   const updateSession = useCallback((id, field, value) => {
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
-  }, []);
+  }, [setSessions]);
 
   const { workedMinutes, breakMinutes, remainingMinutes } = useMemo(() => {
     const nowM = getCurrentTimeMinutes();
@@ -185,6 +185,7 @@ function App() {
       breakMinutes: breakTime,
       remainingMinutes: remaining,
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- nowTick triggers recompute every minute for live punch-out
   }, [sessions, use24Hour, expectedWorkHours, nowTick]);
 
   const totalSpanMinutes = useMemo(() => {
@@ -201,6 +202,7 @@ function App() {
     const first = sorted[0].inM;
     const last = sorted[sorted.length - 1].outM;
     return Math.max(0, last - first);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- nowTick triggers recompute every minute for live punch-out
   }, [sessions, use24Hour, nowTick]);
 
   return (

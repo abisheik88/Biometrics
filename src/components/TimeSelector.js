@@ -175,8 +175,6 @@ function TimeSelector({ value, onChange, label, id, use24Hour = false }) {
             onBlur={handleHourBlur}
             onFocus={handleHourFocus}
             aria-label="Hour (type or use list)"
-            aria-haspopup="listbox"
-            aria-expanded={openDropdown === 'hour'}
           />
           <button
             type="button"
@@ -219,8 +217,6 @@ function TimeSelector({ value, onChange, label, id, use24Hour = false }) {
             onBlur={handleMinuteBlur}
             onFocus={handleMinuteFocus}
             aria-label="Minute (type or use list)"
-            aria-haspopup="listbox"
-            aria-expanded={openDropdown === 'minute'}
           />
           <button
             type="button"
