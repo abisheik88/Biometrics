@@ -3,7 +3,15 @@ import TimeSelector from './components/TimeSelector';
 import './App.css';
 
 const STORAGE_KEY = 'biometric-calculator-logs';
-const STORAGE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+/** Bump when storage format changes; legacy data (no version or old version) gets punch log cleared on load. */
+const STORAGE_VERSION = 1;
+
+/** Start of current calendar day (midnight) in ms. */
+function getStartOfTodayMs() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
 
 function loadFromStorage() {
   try {
@@ -11,11 +19,18 @@ function loadFromStorage() {
     if (!raw) return null;
     const data = JSON.parse(raw);
     if (!data || !Array.isArray(data.sessions)) return null;
-    const savedAt = data.savedAt != null ? data.savedAt : 0;
-    if (Date.now() - savedAt > STORAGE_MAX_AGE_MS) return null; // expired after a day
     const expectedWorkHours = typeof data.expectedWorkHours === 'number'
       ? Math.max(0, Math.min(24, data.expectedWorkHours))
       : 8;
+    // Legacy build or old format: no version / wrong version → clear punch log (fresh start for new build)
+    if (data.version !== STORAGE_VERSION) {
+      return { sessions: [], expectedWorkHours };
+    }
+    const savedAt = data.savedAt != null ? data.savedAt : 0;
+    // If data was saved on a previous calendar day, clear punch log (new day = fresh log)
+    if (savedAt < getStartOfTodayMs()) {
+      return { sessions: [], expectedWorkHours };
+    }
     return { sessions: data.sessions, expectedWorkHours };
   } catch {
     return null;
@@ -25,6 +40,7 @@ function loadFromStorage() {
 function saveToStorage(sessions, expectedWorkHours) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: STORAGE_VERSION,
       sessions,
       expectedWorkHours,
       savedAt: Date.now(),
@@ -105,12 +121,16 @@ function createSession() {
 
 function getInitialState() {
   const loaded = loadFromStorage();
-  if (loaded && loaded.sessions.length > 0) {
-    const maxId = Math.max(...loaded.sessions.map((s) => s.id), 0);
+  if (loaded) {
+    const sessions = loaded.sessions || [];
+    const maxId = sessions.length ? Math.max(...sessions.map((s) => s.id), 0) : 0;
     nextId = maxId + 1;
-    return { sessions: loaded.sessions, expectedWorkHours: loaded.expectedWorkHours };
+    return {
+      sessions,
+      expectedWorkHours: loaded.expectedWorkHours,
+    };
   }
-  return { sessions: [createSession()], expectedWorkHours: 8 };
+  return { sessions: [], expectedWorkHours: 8 };
 }
 
 /** Parse time from file/bulk: if AM/PM present use 12h; otherwise treat as 24-hour format. Supports HH:MM or HHMM (e.g. 15:00 or 1500). */
@@ -188,6 +208,8 @@ function App() {
   const setExpectedWorkHours = useCallback((value) => {
     setState((prev) => ({ ...prev, expectedWorkHours: value }));
   }, []);
+  /** Inside = last punch log entry has no punch out yet */
+  const isInside = sessions.length > 0 && sessions[sessions.length - 1].outTime == null;
   // 24-hour format logic commented out for now – always use 12-hour format
   // const [use24Hour, setUse24Hour] = useState(false);
   const use24Hour = false;
@@ -273,6 +295,28 @@ function App() {
     setActiveTab('manual');
   }, [bulkParsedRows, setSessions]);
 
+  const punchIn = useCallback(() => {
+    if (isInside) return; // cannot punch in again until punched out
+    const nowStr = getCurrentTimeString(use24Hour);
+    setSessions((prev) => {
+      const id = nextId++;
+      return [...prev, { id, inTime: nowStr, outTime: null }];
+    });
+  }, [isInside, setSessions, use24Hour]);
+
+  const punchOut = useCallback(() => {
+    if (!isInside) return;
+    const nowStr = getCurrentTimeString(use24Hour);
+    setSessions((prev) => {
+      const last = prev.length - 1;
+      if (last < 0 || prev[last].outTime != null) return prev;
+      return [
+        ...prev.slice(0, last),
+        { ...prev[last], outTime: nowStr },
+      ];
+    });
+  }, [isInside, setSessions, use24Hour]);
+
   useEffect(() => {
     saveToStorage(sessions, expectedWorkHours);
   }, [sessions, expectedWorkHours]);
@@ -287,10 +331,7 @@ function App() {
   }, [setSessions]);
 
   const removePunch = useCallback((id) => {
-    setSessions((prev) => {
-      const next = prev.filter((s) => s.id !== id);
-      return next.length ? next : [createSession()];
-    });
+    setSessions((prev) => prev.filter((s) => s.id !== id));
   }, [setSessions]);
 
   const updateSession = useCallback((id, field, value) => {
@@ -299,7 +340,8 @@ function App() {
     );
   }, [setSessions]);
 
-  const { workedMinutes, breakMinutes, remainingMinutes } = useMemo(() => {
+  /** Worked / break / remaining from punch log (sessions) only. Open entry (outTime null) uses current time for out. */
+  const { workedMinutes, breakMinutes, remainingMinutes, totalSpanMinutes } = useMemo(() => {
     const nowM = getCurrentTimeMinutes();
     const sorted = [...sessions]
       .map((s) => ({
@@ -314,42 +356,28 @@ function App() {
     let breakTime = 0;
 
     for (const s of sorted) {
-      const duration = Math.max(0, s.outM - s.inM);
-      worked += duration;
+      worked += Math.max(0, s.outM - s.inM);
     }
 
     for (let i = 1; i < sorted.length; i++) {
-      const gap = Math.max(0, sorted[i].inM - sorted[i - 1].outM);
-      breakTime += gap;
+      breakTime += Math.max(0, sorted[i].inM - sorted[i - 1].outM);
     }
 
     const expectedMinutes = expectedWorkHours * 60;
     const remaining = expectedMinutes - worked;
 
+    const totalSpan = sorted.length
+      ? Math.max(0, sorted[sorted.length - 1].outM - sorted[0].inM)
+      : 0;
+
     return {
       workedMinutes: worked,
       breakMinutes: breakTime,
       remainingMinutes: remaining,
+      totalSpanMinutes: totalSpan,
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- nowTick triggers recompute every minute for live punch-out
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nowTick for live open punch-out
   }, [sessions, use24Hour, expectedWorkHours, nowTick]);
-
-  const totalSpanMinutes = useMemo(() => {
-    if (sessions.length === 0) return 0;
-    const nowM = getCurrentTimeMinutes();
-    const sorted = [...sessions]
-      .map((s) => ({
-        inM: parseTimeToMinutes(use24Hour ? to24h(s.inTime) : s.inTime),
-        outM: s.outTime == null
-          ? nowM
-          : parseTimeToMinutes(use24Hour ? to24h(s.outTime) : s.outTime),
-      }))
-      .sort((a, b) => a.inM - b.inM);
-    const first = sorted[0].inM;
-    const last = sorted[sorted.length - 1].outM;
-    return Math.max(0, last - first);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- nowTick triggers recompute every minute for live punch-out
-  }, [sessions, use24Hour, nowTick]);
 
   return (
     <div className="App">
@@ -409,6 +437,44 @@ function App() {
 
           {activeTab === 'manual' && (
             <div className="container container--manual">
+              <section className="biometric" aria-label="Biometric punch">
+                <div className="biometric__status" data-testid="biometric-status">
+                  <span className={`biometric__indicator biometric__indicator--${isInside ? 'inside' : 'outside'}`} aria-hidden>
+                    {isInside ? '🟢' : '⚪'}
+                  </span>
+                  <span className="biometric__label">
+                    {isInside ? 'Inside Office' : 'Outside Office'}
+                  </span>
+                </div>
+                {isInside && (
+                  <p className="biometric__warning" role="alert">
+                    You are currently punched in. So you are inside the office.
+                  </p>
+                )}
+                <div className="biometric__actions">
+                  <button
+                    type="button"
+                    className="biometric__btn biometric__btn--in"
+                    onClick={punchIn}
+                    disabled={isInside}
+                    aria-label="Punch in"
+                    data-testid="punch-in-btn"
+                  >
+                    Punch In
+                  </button>
+                  <button
+                    type="button"
+                    className="biometric__btn biometric__btn--out"
+                    onClick={punchOut}
+                    disabled={!isInside}
+                    aria-label="Punch out"
+                    data-testid="punch-out-btn"
+                  >
+                    Punch Out
+                  </button>
+                </div>
+              </section>
+
               <section className="punch-log" aria-label="Punch log">
                 <div className="punch-log__header">
                   <h2 className="punch-log__title">Punch log</h2>
@@ -422,64 +488,70 @@ function App() {
                   </button>
                 </div>
 
-                <ul className="punch-log__list">
-                  {sessions.map((session) => (
-                    <li key={session.id} className="punch-log__row">
-                      <div className="punch-log__times">
-                        <TimeSelector
-                          id={`in-${session.id}`}
-                          label="Punch in"
-                          value={use24Hour ? to24h(session.inTime) : session.inTime}
-                          onChange={(v) =>
-                            updateSession(
-                              session.id,
-                              'inTime',
-                              use24Hour ? to12h(v) : v
-                            )
-                          }
-                          use24Hour={use24Hour}
-                        />
-                        <div className="punch-log__out-wrap">
+                {sessions.length === 0 ? (
+                  <p className="punch-log__empty" data-testid="punch-log-empty">
+                    No entries yet. Punch In above to add your first entry, or use &quot;+ Add punch&quot; for manual times.
+                  </p>
+                ) : (
+                  <ul className="punch-log__list">
+                    {sessions.map((session) => (
+                      <li key={session.id} className="punch-log__row">
+                        <div className="punch-log__times">
                           <TimeSelector
-                            id={`out-${session.id}`}
-                            label="Punch out"
-                            value={
-                              session.outTime != null
-                                ? (use24Hour ? to24h(session.outTime) : session.outTime)
-                                : getCurrentTimeString(use24Hour)
-                            }
+                            id={`in-${session.id}`}
+                            label="Punch in"
+                            value={use24Hour ? to24h(session.inTime) : session.inTime}
                             onChange={(v) =>
                               updateSession(
                                 session.id,
-                                'outTime',
+                                'inTime',
                                 use24Hour ? to12h(v) : v
                               )
                             }
                             use24Hour={use24Hour}
                           />
-                          <button
-                            type="button"
-                            className="punch-log__now"
-                            onClick={() => updateSession(session.id, 'outTime', null)}
-                            title="Use current time for punch out"
-                            aria-label="Use current time"
-                          >
-                            Now
-                          </button>
+                          <div className="punch-log__out-wrap">
+                            <TimeSelector
+                              id={`out-${session.id}`}
+                              label="Punch out"
+                              value={
+                                session.outTime != null
+                                  ? (use24Hour ? to24h(session.outTime) : session.outTime)
+                                  : getCurrentTimeString(use24Hour)
+                              }
+                              onChange={(v) =>
+                                updateSession(
+                                  session.id,
+                                  'outTime',
+                                  use24Hour ? to12h(v) : v
+                                )
+                              }
+                              use24Hour={use24Hour}
+                            />
+                            <button
+                              type="button"
+                              className="punch-log__now"
+                              onClick={() => updateSession(session.id, 'outTime', getCurrentTimeString(use24Hour))}
+                              title="Use current time for punch out"
+                              aria-label="Use current time"
+                            >
+                              Now
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="punch-log__remove"
-                        onClick={() => removePunch(session.id)}
-                        aria-label="Remove this punch"
-                        title="Remove"
-                      >
-                        Remove
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                        <button
+                          type="button"
+                          className="punch-log__remove"
+                          onClick={() => removePunch(session.id)}
+                          aria-label="Remove this punch"
+                          title="Remove"
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </section>
 
               <div className="summary">
@@ -520,11 +592,11 @@ function App() {
 
           {activeTab === 'upload' && (
             <div className="container container--upload">
-            <p className="upload-hint">
-              Upload a CSV or text file with one punch in/out per line. Separate times by comma or tab.
-              <br />
-              With AM/PM: <code>9:00 AM, 5:00 PM</code>. Without AM/PM: treated as 24-hour format, e.g. <code>09:00, 17:00</code>.
-            </p>
+              <p className="upload-hint">
+                Upload a CSV or text file with one punch in/out per line. Separate times by comma or tab.
+                <br />
+                With AM/PM: <code>9:00 AM, 5:00 PM</code>. Without AM/PM: treated as 24-hour format, e.g. <code>09:00, 17:00</code>.
+              </p>
               <label className="upload-label">
                 <span className="upload-label__text">Choose file</span>
                 <input

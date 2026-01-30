@@ -6,10 +6,10 @@ test('renders biometric calculator title', () => {
   expect(screen.getByText(/Biometric Calculator/i)).toBeInTheDocument();
 });
 
-test('renders punch log with Punch in and Punch out', () => {
+test('renders punch log with Punch In and Punch Out', () => {
   render(<App />);
-  expect(screen.getByText('Punch in')).toBeInTheDocument();
-  expect(screen.getByText('Punch out')).toBeInTheDocument();
+  expect(screen.getByTestId('punch-in-btn')).toBeInTheDocument();
+  expect(screen.getByTestId('punch-out-btn')).toBeInTheDocument();
 });
 
 test('renders Add punch button', () => {
